@@ -1,5 +1,6 @@
 
 import java.util.ArrayList;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 /*
@@ -16,6 +17,7 @@ public class listagemVIEW extends javax.swing.JFrame {
     /**
      * Creates new form listagemVIEW
      */
+    vendasVIEW vendas = new vendasVIEW();
     public listagemVIEW() {
         initComponents();
         listarProdutos();
@@ -53,8 +55,29 @@ public class listagemVIEW extends javax.swing.JFrame {
             new String [] {
                 "ID", "Nome", "Valor", "Status"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        listaProdutos.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        listaProdutos.getTableHeader().setReorderingAllowed(false);
+        listaProdutos.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                listaProdutosMouseReleased(evt);
+            }
+        });
         jScrollPane1.setViewportView(listaProdutos);
+        if (listaProdutos.getColumnModel().getColumnCount() > 0) {
+            listaProdutos.getColumnModel().getColumn(0).setResizable(false);
+            listaProdutos.getColumnModel().getColumn(1).setResizable(false);
+            listaProdutos.getColumnModel().getColumn(2).setResizable(false);
+            listaProdutos.getColumnModel().getColumn(3).setResizable(false);
+        }
 
         jLabel1.setFont(new java.awt.Font("Lucida Fax", 0, 18)); // NOI18N
         jLabel1.setText("Lista de Produtos");
@@ -136,22 +159,39 @@ public class listagemVIEW extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnVenderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVenderActionPerformed
-        String id = id_produto_venda.getText();
-        
-        ProdutosDAO produtosdao = new ProdutosDAO();
-        
-        //produtosdao.venderProduto(Integer.parseInt(id));
-        listarProdutos();
+        try {
+            String venda = (String) listaProdutos.getValueAt(listaProdutos.getSelectedRow(), 3);
+            int id = Integer.parseInt(id_produto_venda.getText());
+            ProdutosDAO produtosdao = new ProdutosDAO();        
+            if(produtosdao.venderProduto(id) && !venda.equals("Vendido")) {
+                listarProdutos();
+                if(vendas.isVisible()) {
+                    vendas.listarVendas();
+                }
+                JOptionPane.showMessageDialog(rootPane, "O produto foi vendido com sucesso.");
+            } else {
+                JOptionPane.showMessageDialog(rootPane, "Produto não encontrado ou já vendido.");
+            }
+        } catch(NumberFormatException e) {
+            JOptionPane.showMessageDialog(rootPane, "Por favor, digite um ID utilizando apenas números\nou selecione o produto na tabela.");
+        }
     }//GEN-LAST:event_btnVenderActionPerformed
 
     private void btnVendasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVendasActionPerformed
-        //vendasVIEW vendas = new vendasVIEW(); 
-        //vendas.setVisible(true);
+        vendas.setVisible(true);
     }//GEN-LAST:event_btnVendasActionPerformed
 
     private void btnVoltarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVoltarActionPerformed
         this.dispose();
     }//GEN-LAST:event_btnVoltarActionPerformed
+
+    private void listaProdutosMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listaProdutosMouseReleased
+        int row = listaProdutos.getSelectedRow();
+        if(row >= 0) {
+            int id = (Integer) listaProdutos.getValueAt(row, 0);
+            id_produto_venda.setText(String.valueOf(id));
+        }
+    }//GEN-LAST:event_listaProdutosMouseReleased
 
     /**
      * @param args the command line arguments
@@ -201,7 +241,7 @@ public class listagemVIEW extends javax.swing.JFrame {
     private javax.swing.JTable listaProdutos;
     // End of variables declaration//GEN-END:variables
 
-    private void listarProdutos(){
+    protected void listarProdutos(){
         try {
             ProdutosDAO produtosdao = new ProdutosDAO();
             
@@ -218,9 +258,8 @@ public class listagemVIEW extends javax.swing.JFrame {
                     listagem.get(i).getStatus()
                 });
             }
-        } catch (Exception e) {
-            
-        }
-    
+        } catch (Exception e) {            
+        }    
     }
+    
 }
